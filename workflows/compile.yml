@@ -1,0 +1,29 @@
+name: Compile TeX to PDF
+
+on:
+  schedule:
+    # 毎週月曜 0:30 UTC（日本時間 9:30、Geminiの定期実行30分後）
+    - cron: '30 0 * * 1'
+  workflow_dispatch: # 手動実行ボタン
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/paperist/texlive-ja:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python & Dependencies
+        run: |
+          apt-get update && apt-get install -y python3 python3-pip
+          pip3 install --break-system-packages google-api-python-client google-auth
+
+      - name: Run Compile and Sync
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          DRIVE_TEX_FOLDER_ID: ${{ secrets.DRIVE_TEX_FOLDER_ID }}
+          DRIVE_PDF_FOLDER_ID: ${{ secrets.DRIVE_PDF_FOLDER_ID }}
+        run: |
+          python3 sync_and_compile.py
